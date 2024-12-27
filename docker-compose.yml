@@ -1,0 +1,18 @@
+services:
+  rsync-web:
+    build: .
+    container_name: rsync-web
+    ports:
+      - "8856:8856"
+    volumes:
+      - "/vol1:/home:ro"
+      - "/vol02:/data"
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    environment:
+      - LANG=zh_CN.UTF-8
+      - LANGUAGE=zh_CN:zh
+      - LC_ALL=zh_CN.UTF-8
+      - TZ=Asia/Shanghai
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped

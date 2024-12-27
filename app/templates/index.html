@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rsync Web界面</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="time"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .delete-btn {
+            background-color: #f44336;
+        }
+        .delete-btn:hover {
+            background-color: #da190b;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dff0d8;
+            border: 1px solid #d6e9c6;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            border: 1px solid #ebccd1;
+            color: #a94442;
+        }
+        .tasks {
+            margin-top: 30px;
+        }
+        .task {
+            background-color: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .schedule-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .schedule-options {
+            display: none;
+        }
+        .schedule-options.active {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        select, input[type="time"], input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            height: 36px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        #schedule_type {
+            min-width: 100px;
+        }
+        #week_day {
+            min-width: 90px;
+        }
+        input[type="number"] {
+            width: 80px;
+        }
+        input[type="time"] {
+            width: 110px;
+            padding: 4px 8px;
+        }
+        .sync-btn {
+            background-color: #2196F3;
+        }
+        .sync-btn:hover {
+            background-color: #1976D2;
+        }
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8L2 4h8z'/%3E%3C/svg%3E") no-repeat right 8px center;
+            padding-right: 24px;
+        }
+        .path-selector {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            min-width: 400px;
+            max-width: 600px;
+            display: none;
+        }
+        
+        .path-selector .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .path-selector .current-path {
+            background: #f5f5f5;
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            word-break: break-all;
+        }
+        
+        .path-selector .items {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .path-selector .item {
+            padding: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .path-selector .item:hover {
+            background: #f5f5f5;
+        }
+        
+        .path-selector .item i {
+            font-size: 1.2em;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+        
+        .path-selector .item.selected {
+            background-color: #e3f2fd;
+        }
+        
+        .path-selector .header button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .path-selector .header button:hover {
+            background-color: #45a049;
+        }
+        
+        .path-selector .header button:last-child {
+            background-color: #f44336;
+        }
+        
+        .path-selector .header button:last-child:hover {
+            background-color: #da190b;
+        }
+
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 10px;
+            }
+
+            .form-group {
+                margin-bottom: 10px;
+            }
+
+            .form-group > div {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .form-group > div button {
+                width: 100%;
+                margin-top: 5px;
+            }
+
+            .schedule-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .schedule-options {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .schedule-options.active {
+                flex-direction: column;
+            }
+
+            select, input[type="time"], input[type="number"] {
+                width: 100%;
+                margin: 5px 0;
+            }
+
+            .path-selector {
+                width: 90%;
+                min-width: auto;
+                max-width: none;
+            }
+
+            .task {
+                padding: 15px;
+            }
+
+            .task button {
+                width: 100%;
+                margin-top: 5px;
+            }
+
+            button {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+
+        @media screen and (min-width: 769px) and (max-width: 1024px) {
+            body {
+                max-width: 90%;
+            }
+
+            .container {
+                padding: 15px;
+            }
+        }
+
+        @media screen and (min-width: 1025px) {
+            .container {
+                max-width: 1000px;
+                margin: 0 auto;
+            }
+        }
+
+        .edit-btn {
+            background-color: #FF9800;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+        
+        .edit-btn:hover {
+            background-color: #F57C00;
+        }
+        
+        .task-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .edit-schedule {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        
+        .sync-options {
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            min-height: 60px;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Rsync Web界面</h1>
+        <div class="form-group">
+            <label for="source">源路径:</label>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="source" placeholder="/home/path/">
+                <button onclick="openPathSelector('source')">选择</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="destination">目标路径:</label>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="destination" placeholder="/data/path/">
+                <button onclick="openPathSelector('destination')">选择</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>定时设置 (可选):</label>
+            <div class="schedule-container">
+                <div class="schedule-group">
+                    <select id="schedule_type" onchange="toggleScheduleOptions()">
+                        <option value="none">不设置定时</option>
+                        <option value="interval">间隔执行</option>
+                        <option value="daily">每天</option>
+                        <option value="weekly">每周</option>
+                        <option value="monthly">每月</option>
+                    </select>
+                    
+                    <div id="daily_options" class="schedule-options">
+                        <input type="time" id="daily_time">
+                    </div>
+                    
+                    <div id="weekly_options" class="schedule-options">
+                        <select id="week_day">
+                            <option value="0">星期日</option>
+                            <option value="1">星期一</option>
+                            <option value="2">星期二</option>
+                            <option value="3">星期三</option>
+                            <option value="4">星期四</option>
+                            <option value="5">星期五</option>
+                            <option value="6">星期六</option>
+                        </select>
+                        <input type="time" id="weekly_time">
+                    </div>
+                    
+                    <div id="monthly_options" class="schedule-options">
+                        <input type="number" id="month_day" min="1" max="31" placeholder="日期">
+                        <input type="time" id="monthly_time">
+                    </div>
+                    
+                    <div id="interval_options" class="schedule-options">
+                        <div style="margin-bottom: 5px; color: #666; font-size: 0.9em;">建议间隔时间不少于5分钟</div>
+                        <input type="number" id="interval_value" min="1" placeholder="间隔数值">
+                        <select id="interval_unit">
+                            <option value="minutes">分钟</option>
+                            <option value="hours">小时</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>同步选项:</label>
+            <div class="sync-options">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="delete_option">
+                    启用--delete选项（删除目标目录中源目录没有的文件）
+                </label>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="remark">备注:</label>
+            <textarea id="remark" placeholder="可以添加一些备注说明..." rows="3"></textarea>
+        </div>
+        <button onclick="addTask()">添加</button>
+        <div id="result"></div>
+
+        <div class="tasks">
+            <h2>同步任务列表</h2>
+            <div id="taskList"></div>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="path-selector" id="pathSelector">
+        <div class="header">
+            <h3>选择路径</h3>
+            <div>
+                <button onclick="confirmPath()" style="margin-right: 10px;">确定</button>
+                <button onclick="closePathSelector()">关闭</button>
+            </div>
+        </div>
+        <div class="current-path" id="currentPath"></div>
+        <div class="items" id="pathItems"></div>
+    </div>
+
+    <script>
+        function toggleScheduleOptions() {
+            const scheduleType = document.getElementById('schedule_type').value;
+            document.querySelectorAll('.schedule-options').forEach(el => el.classList.remove('active'));
+            if (scheduleType !== 'none') {
+                document.getElementById(`${scheduleType}_options`).classList.add('active');
+            }
+        }
+
+        function getScheduleInfo() {
+            const type = document.getElementById('schedule_type').value;
+            if (type === 'none') return null;
+
+            const schedule = { type };
+            if (type === 'daily') {
+                schedule.time = document.getElementById('daily_time').value;
+            } else if (type === 'weekly') {
+                schedule.day = document.getElementById('week_day').value;
+                schedule.time = document.getElementById('weekly_time').value;
+            } else if (type === 'monthly') {
+                schedule.day = document.getElementById('month_day').value;
+                schedule.time = document.getElementById('monthly_time').value;
+            } else if (type === 'interval') {
+                schedule.interval = document.getElementById('interval_value').value;
+                schedule.unit = document.getElementById('interval_unit').value;
+            }
+            return schedule;
+        }
+
+        function addTask() {
+            const source = document.getElementById('source').value;
+            const destination = document.getElementById('destination').value;
+            const schedule = getScheduleInfo();
+            const deleteOption = document.getElementById('delete_option').checked;
+            const remark = document.getElementById('remark').value;
+
+            if (!source || !destination) {
+                alert('请填写源路径和目标路径');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('source', source);
+            formData.append('destination', destination);
+            formData.append('delete_option', deleteOption);
+            formData.append('remark', remark);
+            if (schedule) {
+                formData.append('schedule', JSON.stringify(schedule));
+            }
+
+            fetch('/tasks', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadTasks();
+                    // 清空表单
+                    document.getElementById('source').value = '';
+                    document.getElementById('destination').value = '';
+                    document.getElementById('schedule_type').value = 'none';
+                    document.getElementById('delete_option').checked = false;
+                    document.getElementById('remark').value = '';
+                    toggleScheduleOptions();
+                } else {
+                    alert('添加任务失败: ' + data.error);
+                }
+            });
+        }
+
+        function executeSync(taskId) {
+            fetch(`/tasks/${taskId}/sync`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('同步成功');
+                } else {
+                    alert('同步失败: ' + data.error);
+                }
+            });
+        }
+
+        function loadTasks() {
+            fetch('/tasks')
+            .then(response => response.json())
+            .then(tasks => {
+                const taskList = document.getElementById('taskList');
+                taskList.innerHTML = tasks.map(task => {
+                    let scheduleText = '无定时';
+                    if (task.schedule) {
+                        const s = task.schedule;
+                        if (s.type === 'daily') {
+                            scheduleText = `每天 ${s.time}`;
+                        } else if (s.type === 'weekly') {
+                            const days = ['日', '一', '二', '三', '四', '五', '六'];
+                            scheduleText = `每周${days[s.day]} ${s.time}`;
+                        } else if (s.type === 'monthly') {
+                            scheduleText = `每月${s.day}日 ${s.time}`;
+                        } else if (s.type === 'interval') {
+                            const unit = s.unit === 'minutes' ? '分钟' : '小时';
+                            scheduleText = `每${s.interval}${unit}`;
+                        }
+                    }
+
+                    const scheduleData = task.schedule ? JSON.stringify(task.schedule).replace(/"/g, '&quot;') : 'null';
+                    
+                    return `
+                        <div class="task">
+                            <p>源路径: ${task.source}</p>
+                            <p>目标路径: ${task.destination}</p>
+                            <p>定时: ${scheduleText}</p>
+                            <p>创建时间: ${task.created_at}</p>
+                            <p>同步选项: ${task.delete_option ? '启用' : '禁用'}--delete选项</p>
+                            ${task.remark ? `<p>备注: ${task.remark}</p>` : ''}
+                            <div class="task-buttons">
+                                <button class="sync-btn" onclick="executeSync(${task.id})">立即同步</button>
+                                <button class="edit-btn" onclick="showEditSchedule(${task.id}, '${scheduleData}')">编辑定时</button>
+                                <button class="delete-btn" onclick="deleteTask(${task.id})">删除</button>
+                            </div>
+                            <div id="edit-schedule-${task.id}" class="edit-schedule" style="display: none; margin-top: 10px;">
+                                <div class="schedule-group">
+                                    <select id="edit_schedule_type_${task.id}" onchange="toggleEditScheduleOptions(${task.id})">
+                                        <option value="none">不设置定时</option>
+                                        <option value="interval">间隔执行</option>
+                                        <option value="daily">每天</option>
+                                        <option value="weekly">每周</option>
+                                        <option value="monthly">每月</option>
+                                    </select>
+                                    
+                                    <div id="edit_interval_options_${task.id}" class="schedule-options">
+                                        <div style="margin-bottom: 5px; color: #666; font-size: 0.9em;">建议间隔时间不少于5分钟</div>
+                                        <input type="number" id="edit_interval_value_${task.id}" min="1" placeholder="间隔数值">
+                                        <select id="edit_interval_unit_${task.id}">
+                                            <option value="minutes">分钟</option>
+                                            <option value="hours">小时</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div id="edit_daily_options_${task.id}" class="schedule-options">
+                                        <input type="time" id="edit_daily_time_${task.id}">
+                                    </div>
+                                    
+                                    <div id="edit_weekly_options_${task.id}" class="schedule-options">
+                                        <select id="edit_week_day_${task.id}">
+                                            <option value="0">星期日</option>
+                                            <option value="1">星期一</option>
+                                            <option value="2">星期二</option>
+                                            <option value="3">星期三</option>
+                                            <option value="4">星期四</option>
+                                            <option value="5">星期五</option>
+                                            <option value="6">星期六</option>
+                                        </select>
+                                        <input type="time" id="edit_weekly_time_${task.id}">
+                                    </div>
+                                    
+                                    <div id="edit_monthly_options_${task.id}" class="schedule-options">
+                                        <input type="number" id="edit_month_day_${task.id}" min="1" max="31" placeholder="日期">
+                                        <input type="time" id="edit_monthly_time_${task.id}">
+                                    </div>
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <button onclick="saveSchedule(${task.id})">确定</button>
+                                    <button onclick="cancelEditSchedule(${task.id})">取消</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            });
+        }
+
+        function deleteTask(taskId) {
+            if (confirm('确定要删除这个任务吗？')) {
+                fetch(`/tasks/${taskId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadTasks();
+                    }
+                });
+            }
+        }
+
+        let currentTarget = null;
+        let currentSelectedPath = null;
+        
+        function openPathSelector(target) {
+            currentTarget = target;
+            currentSelectedPath = null;
+            const input = document.getElementById(target);
+            const initialPath = input.value || (target === 'source' ? '/home' : '/data');
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('pathSelector').style.display = 'block';
+            loadPath(initialPath);
+        }
+        
+        function selectPath(path, type) {
+            if (type === 'directory') {
+                loadPath(path);
+                currentSelectedPath = path;
+            } else {
+                currentSelectedPath = path;
+            }
+        }
+        
+        function confirmPath() {
+            if (currentSelectedPath) {
+                document.getElementById(currentTarget).value = currentSelectedPath;
+            }
+            closePathSelector();
+        }
+        
+        function closePathSelector() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('pathSelector').style.display = 'none';
+            currentTarget = null;
+            currentSelectedPath = null;
+        }
+        
+        function loadPath(path) {
+            fetch(`/list_dir?path=${encodeURIComponent(path)}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('currentPath').textContent = data.current_path;
+                    const itemsContainer = document.getElementById('pathItems');
+                    itemsContainer.innerHTML = data.items.map(item => `
+                        <div class="item" onclick="selectPath('${item.path}', '${item.type}')">
+                            <i class="material-icons">${item.type === 'directory' ? '📁' : '📄'}</i>
+                            ${item.name}
+                        </div>
+                    `).join('');
+                });
+        }
+
+        // 显示编辑定时表单
+        function showEditSchedule(taskId, scheduleStr) {
+            const editScheduleDiv = document.getElementById(`edit-schedule-${taskId}`);
+            if (!editScheduleDiv) return;
+            
+            editScheduleDiv.style.display = 'block';
+            const typeSelect = document.getElementById(`edit_schedule_type_${taskId}`);
+            if (!typeSelect) return;
+            
+            let schedule = null;
+            try {
+                schedule = JSON.parse(scheduleStr.replace(/&quot;/g, '"'));
+            } catch (e) {
+                console.error('Parse schedule error:', e);
+            }
+            
+            if (schedule) {
+                typeSelect.value = schedule.type;
+                if (schedule.type === 'daily') {
+                    document.getElementById(`edit_daily_time_${taskId}`).value = schedule.time;
+                } else if (schedule.type === 'weekly') {
+                    document.getElementById(`edit_week_day_${taskId}`).value = schedule.day;
+                    document.getElementById(`edit_weekly_time_${taskId}`).value = schedule.time;
+                } else if (schedule.type === 'monthly') {
+                    document.getElementById(`edit_month_day_${taskId}`).value = schedule.day;
+                    document.getElementById(`edit_monthly_time_${taskId}`).value = schedule.time;
+                } else if (schedule.type === 'interval') {
+                    document.getElementById(`edit_interval_value_${taskId}`).value = schedule.interval;
+                    document.getElementById(`edit_interval_unit_${taskId}`).value = schedule.unit;
+                }
+            } else {
+                typeSelect.value = 'none';
+            }
+            
+            toggleEditScheduleOptions(taskId);
+        }
+
+        // 切换编辑定时选项
+        function toggleEditScheduleOptions(taskId) {
+            const scheduleType = document.getElementById(`edit_schedule_type_${taskId}`).value;
+            document.querySelectorAll(`#edit-schedule-${taskId} .schedule-options`).forEach(el => el.classList.remove('active'));
+            if (scheduleType !== 'none') {
+                document.getElementById(`edit_${scheduleType}_options_${taskId}`).classList.add('active');
+            }
+        }
+
+        // 获取编辑后的定时信息
+        function getEditScheduleInfo(taskId) {
+            const type = document.getElementById(`edit_schedule_type_${taskId}`).value;
+            if (type === 'none') return null;
+
+            const schedule = { type };
+            if (type === 'daily') {
+                schedule.time = document.getElementById(`edit_daily_time_${taskId}`).value;
+            } else if (type === 'weekly') {
+                schedule.day = document.getElementById(`edit_week_day_${taskId}`).value;
+                schedule.time = document.getElementById(`edit_weekly_time_${taskId}`).value;
+            } else if (type === 'monthly') {
+                schedule.day = document.getElementById(`edit_month_day_${taskId}`).value;
+                schedule.time = document.getElementById(`edit_monthly_time_${taskId}`).value;
+            } else if (type === 'interval') {
+                schedule.interval = document.getElementById(`edit_interval_value_${taskId}`).value;
+                schedule.unit = document.getElementById(`edit_interval_unit_${taskId}`).value;
+            }
+            return schedule;
+        }
+
+        // 保存定时设置
+        function saveSchedule(taskId) {
+            const schedule = getEditScheduleInfo(taskId);
+            // 这里需要后端配合添加更新定时的API
+            fetch(`/tasks/${taskId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ schedule })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadTasks();
+                } else {
+                    alert('更新定时设置失��: ' + data.error);
+                }
+            });
+            
+            document.getElementById(`edit-schedule-${taskId}`).style.display = 'none';
+        }
+
+        // 取消编辑定时
+        function cancelEditSchedule(taskId) {
+            document.getElementById(`edit-schedule-${taskId}`).style.display = 'none';
+        }
+
+        // 页面加载时加载任务列表
+        loadTasks();
+    </script>
+</body>
+</html> 
