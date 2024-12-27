@@ -20,19 +20,31 @@
 ### 使用 Docker Compose 部署
 
 1. 克隆项目到本地：
-bash
-git clone https://github.com/yourusername/rsync-web-ui.git
-cd rsync-web-ui
+
+  ```
+  git clone https://github.com/yourusername/rsync-web-ui.git
+  cd rsync-web-ui
+  ```
+
+  
 
 2. 修改 `docker-compose.yml` 中的挂载路径：
-yaml
-volumes:
-"/your/source/path:/home:ro" # 源路径，只读模式
-"/your/target/path:/data" # 目标路径，读写模式
+
+  ```
+  volumes:
+  "/your/source/path:/home:ro" # 源路径，只读模式
+  "/your/target/path:/data" # 目标路径，读写模式
+  ```
+
+  
 
 3. 启动服务：
-bash
-docker-compose up -d
+
+  ```
+  docker-compose up -d
+  ```
+
+  
 
 4. 访问 Web 界面：
 
