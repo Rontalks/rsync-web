@@ -22,7 +22,7 @@
 1. 克隆项目到本地：
 
   ```
-  git clone https://github.com/yourusername/rsync-web-ui.git
+  git clone https://github.com/Rontalks/rsync-web.git
   cd rsync-web-ui
   ```
 
@@ -84,13 +84,21 @@
 
 ## 目录结构
 .
+
 ├── app/
+
 │ ├── templates/
+
 │ │ └── index.html # Web界面模板
+
 │ ├── app.py # Flask应用主程序
+
 │ └── requirements.txt # Python依赖
+
 ├── docker-compose.yml # Docker Compose配置文件
+
 ├── Dockerfile # Docker构建文件
+
 └── README.md # 项目说明文档
 
 ## 安全说明
